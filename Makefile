@@ -1,5 +1,5 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = rogue.cpp
+OBJS = Rogue.cpp
 
 #CC specifies which compiler we're using
 CC = g++
