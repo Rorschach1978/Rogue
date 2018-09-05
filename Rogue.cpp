@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <list>
+#include <string>
 
 #define SCRN_X_MIN 0
 #define SCRN_X_MAX 799
@@ -92,13 +93,11 @@ int draw_grid()
 
 	while (x <WORLD_WIDTH)
 	{
-
 		//linee verticali
-		//SDL_RenderDrawLine(renderer, x, resto_y  + SCRN_Y_MIN, x , SCRN_Y_MAX - resto_y);
 		for (unsigned int y = world_grid.resto_y; y<WORLD_HEIGHT - world_grid.resto_y; ++y)
 		{
 
-			ptr[x + WORLD_WIDTH * y] = 0xFF0000FF;
+			ptr[x + WORLD_WIDTH * y] = 0x00FF0000;
 
 		}
 
@@ -111,11 +110,10 @@ int draw_grid()
 	while (y <WORLD_HEIGHT)
 	{
 		//linee orizzontali
-
 		for (unsigned int x = world_grid.resto_x; x<WORLD_WIDTH - world_grid.resto_x; ++x)
 		{
 
-			ptr[x + WORLD_WIDTH * y] = 0xFF0000FF;
+			ptr[x + WORLD_WIDTH * y] = 0x00FF0000;
 
 		}
 		y += (BLOCK_HEIGHT);
@@ -149,7 +147,7 @@ int main(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	world_buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGRA8888, SDL_TEXTUREACCESS_STREAMING, WORLD_WIDTH, WORLD_HEIGHT);
+	world_buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, WORLD_WIDTH, WORLD_HEIGHT);
 
 	if (world_buffer == NULL)
 	{
@@ -158,12 +156,11 @@ int main(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	}
 
-
 	std::string font_path = ".//freefont-20120503//FreeMono.ttf";
 	
 	    TTF_Init();
 
-	    TTF_Font *font = TTF_OpenFont(font_path.c_str(), 24);
+	    TTF_Font *font = TTF_OpenFont(font_path.c_str(), 26);
 
 	    if (font == NULL)
 	      {
@@ -185,28 +182,8 @@ int main(int argc, char* argv[])
 
 	SDL_Event event;
 	
-	while (!done) {
-		
-		SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-		
-		SDL_RenderClear(renderer);
-
-		srcrect.x = viewport_x;
-		srcrect.y = viewport_y;
-		srcrect.w = SCRN_WIDTH;
-		srcrect.h = SCRN_HEIGHT;
-
-		dstrect.x = 0;
-		dstrect.y = 0;
-		dstrect.w = SCRN_WIDTH;
-		dstrect.h = SCRN_HEIGHT;
-
-		SDL_SetRenderTarget(renderer, world_buffer);
-
-		SDL_RenderCopy(renderer, world_buffer, &srcrect, &dstrect);
-
-		SDL_RenderPresent(renderer);
-
+	while (!done)
+	  {	
 		while (SDL_PollEvent(&event))
 		  {
 
@@ -242,34 +219,66 @@ int main(int argc, char* argv[])
 		      }	//end of switch(event.type)   
 		  }//end of while
 
-		if (viewport_x < 0)
-		  viewport_x = 0;
+		if (viewport_x < 0) viewport_x = 0;
 		
 		if (viewport_x >= (WORLD_WIDTH - SCRN_WIDTH )) viewport_x = (WORLD_WIDTH - SCRN_WIDTH );
 				
-		if (viewport_y < 0)
-		  viewport_y = 0;
+		if (viewport_y < 0) viewport_y = 0;
 		
 		if (viewport_y >= (WORLD_HEIGHT - SCRN_HEIGHT ))  viewport_y = (WORLD_HEIGHT - SCRN_HEIGHT );
 
-		std::cout<<"ViewPort x : "<<viewport_x<<std::endl;
-		std::cout<<"ViewPort y : "<<viewport_y<<std::endl;
+		srcrect = { viewport_x ,viewport_y, SCRN_WIDTH, SCRN_HEIGHT };
 		
+		dstrect = { 0 , 0 , SCRN_WIDTH , SCRN_HEIGHT };
+		
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+		
+		SDL_RenderClear(renderer);
+		
+		SDL_SetRenderTarget(renderer, world_buffer);
+
+		SDL_RenderCopy(renderer, world_buffer, &srcrect, &dstrect);
+
+		SDL_Color color = { 255, 255, 255 };
+
+		std::string pos = "ViewPort position -  x : " + std::to_string(viewport_x) + " y : " + std::to_string(viewport_y);
+
+		SDL_Surface * surface = TTF_RenderText_Solid(font, pos.c_str(), color);
+
+		SDL_Texture * texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+		int texW = 0;
+
+		int texH = 0;
+
+		SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
+
+		SDL_Rect dstrect = { 200, 550, texW, texH };
+		
+		SDL_RenderCopy(renderer, texture, NULL, &dstrect);
+	
+		SDL_RenderPresent(renderer);
+
+		SDL_DestroyTexture(texture);
+
+		SDL_FreeSurface(surface);
 	}
 
 	if (renderer) {
 		SDL_DestroyRenderer(renderer);
 	}
+	
 	if (window) {
 		SDL_DestroyWindow(window);
-
 	}
 
+	TTF_CloseFont(font);
 
-    SDL_DestroyTexture(world_buffer);
+	SDL_DestroyTexture(world_buffer);
 
-    TTF_Quit();
+	TTF_Quit();
 	
 	SDL_Quit();
+
 	return 0;
 }
