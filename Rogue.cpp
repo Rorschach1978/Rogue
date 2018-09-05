@@ -50,6 +50,10 @@ static  int viewport_x = 0;
 
 static  int viewport_y = 0;
 
+static  int character_x = 0;
+
+static  int character_y = 0;
+
 static Grid world_grid;
 
 void create_grid()
@@ -83,13 +87,13 @@ int draw_grid()
 {
 
 
-	SDL_Surface * surface = SDL_CreateRGBSurface(0, WORLD_WIDTH, WORLD_HEIGHT, 32, 0, 0, 0, 0);
+	SDL_Surface * world_surface = SDL_CreateRGBSurface(0, WORLD_WIDTH, WORLD_HEIGHT, 32, 0, 0, 0, 0);
 
-	SDL_LockSurface(surface);
+	SDL_LockSurface(world_surface);
 
 	int x = world_grid.resto_x;
 
-	unsigned int * ptr = (unsigned int *) (surface->pixels);
+	unsigned int * ptr = (unsigned int *) (world_surface->pixels);
 
 	while (x <WORLD_WIDTH)
 	{
@@ -119,11 +123,11 @@ int draw_grid()
 		y += (BLOCK_HEIGHT);
 	}
 
-	SDL_UnlockSurface(surface);
+	SDL_UnlockSurface(world_surface);
 
-	world_buffer = SDL_CreateTextureFromSurface(renderer, surface);
+	world_buffer = SDL_CreateTextureFromSurface(renderer, world_surface);
 
-	SDL_FreeSurface(surface);
+	SDL_FreeSurface(world_surface);
 
 
 	return 1;
@@ -160,7 +164,7 @@ int main(int argc, char* argv[])
 	
 	    TTF_Init();
 
-	    TTF_Font *font = TTF_OpenFont(font_path.c_str(), 26);
+	    TTF_Font *font = TTF_OpenFont(font_path.c_str(), 25);
 
 	    if (font == NULL)
 	      {
@@ -197,6 +201,23 @@ int main(int argc, char* argv[])
 			/* Check the SDLKey values and move change the coords */
 			switch( event.key.keysym.sym )
 			  {
+
+			  case SDLK_a:
+			    character_x -= 1;
+			    break;
+
+			  case SDLK_d:
+			    character_x += 1;
+			    break;
+
+			  case SDLK_w:
+			    character_y -= 1;
+			    break;
+
+			  case SDLK_s:
+			    character_y += 1;
+			    break;
+			    
 			  case SDLK_LEFT:
 			    viewport_x -= 8;
 			    break;
@@ -227,13 +248,17 @@ int main(int argc, char* argv[])
 		
 		if (viewport_y >= (WORLD_HEIGHT - SCRN_HEIGHT ))  viewport_y = (WORLD_HEIGHT - SCRN_HEIGHT );
 
-		srcrect = { viewport_x ,viewport_y, SCRN_WIDTH, SCRN_HEIGHT };
-		
-		dstrect = { 0 , 0 , SCRN_WIDTH , SCRN_HEIGHT };
+		//Clear Background Black
 		
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 		
-		SDL_RenderClear(renderer);
+	        SDL_RenderClear(renderer);
+
+		//Draw World
+
+		srcrect = { viewport_x ,viewport_y, SCRN_WIDTH, SCRN_HEIGHT };
+		
+		dstrect = { 0 , 0 , SCRN_WIDTH , SCRN_HEIGHT };
 		
 		SDL_SetRenderTarget(renderer, world_buffer);
 
@@ -243,25 +268,38 @@ int main(int argc, char* argv[])
 
 		std::string pos = "ViewPort position -  x : " + std::to_string(viewport_x) + " y : " + std::to_string(viewport_y);
 
-		SDL_Surface * surface = TTF_RenderText_Solid(font, pos.c_str(), color);
+		SDL_Surface * font_surface = TTF_RenderText_Solid(font, pos.c_str(), color);
 
-		SDL_Texture * texture = SDL_CreateTextureFromSurface(renderer, surface);
+		SDL_Texture * font_texture = SDL_CreateTextureFromSurface(renderer, font_surface);
 
 		int texW = 0;
 
 		int texH = 0;
 
-		SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
+		SDL_QueryTexture(font_texture, NULL, NULL, &texW, &texH);
 
-		SDL_Rect dstrect = { 200, 550, texW, texH };
+		SDL_Rect font_dstrect = { 200, 550, texW, texH };
 		
-		SDL_RenderCopy(renderer, texture, NULL, &dstrect);
-	
+		SDL_RenderCopy(renderer, font_texture, NULL, &font_dstrect);
+
+		//Draw Character
+
+		SDL_Rect r {character_x,character_y,2,2};
+  
+		SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255 );
+	       
+		SDL_RenderFillRect( renderer, &r );
+
+		//Draw Everything
+
 		SDL_RenderPresent(renderer);
 
-		SDL_DestroyTexture(texture);
+		//
 
-		SDL_FreeSurface(surface);
+		SDL_DestroyTexture(font_texture);
+
+		SDL_FreeSurface(font_surface);
+
 	}
 
 	if (renderer) {
@@ -272,9 +310,11 @@ int main(int argc, char* argv[])
 		SDL_DestroyWindow(window);
 	}
 
-	TTF_CloseFont(font);
+	
 
 	SDL_DestroyTexture(world_buffer);
+	
+	TTF_CloseFont(font);
 
 	TTF_Quit();
 	
