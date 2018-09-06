@@ -151,7 +151,12 @@ int draw_grid()
 
 	SDL_FreeSurface(world_surface);
 
+	//posiziona il personaggio sulla griglia
+	character_x = world_grid.resto_x;
 
+	character_y = world_grid.resto_y;
+
+	
 	return 1;
 }
 
@@ -235,19 +240,19 @@ int main(int argc, char* argv[])
 			  {
 
 			  case SDLK_a:
-			    character_x -= 1;
+			    character_x -= BLOCK_WIDTH;
 			    break;
 
 			  case SDLK_d:
-			    character_x += 1;
+			    character_x += BLOCK_WIDTH;
 			    break;
 
 			  case SDLK_w:
-			    character_y -= 1;
+			    character_y -= BLOCK_HEIGHT;
 			    break;
 
 			  case SDLK_s:
-			    character_y += 1;
+			    character_y += BLOCK_HEIGHT;
 			    break;
 			    
 			  case SDLK_LEFT:
@@ -280,13 +285,13 @@ int main(int argc, char* argv[])
 		
 		if (viewport_y >= (WORLD_HEIGHT - SCRN_HEIGHT ))  viewport_y = (WORLD_HEIGHT - SCRN_HEIGHT );
 
-		if (character_x <0 ) character_x =0;
+		if (character_x <0 ) character_x =world_grid.resto_x;
 
-		if (character_x > SCRN_WIDTH - CHARACTER_WIDTH) character_x = SCRN_WIDTH - CHARACTER_WIDTH; 
+		if (character_x > SCRN_WIDTH - CHARACTER_WIDTH) character_x = (SCRN_WIDTH - world_grid.resto_x - BLOCK_WIDTH); 
 
-		if (character_y <0 ) character_y =0;
+		if (character_y <0 ) character_y =world_grid.resto_y;
 
-		if (character_y > SCRN_HEIGHT - CHARACTER_HEIGHT) character_y = SCRN_HEIGHT - CHARACTER_HEIGHT; 
+		if (character_y > SCRN_HEIGHT - CHARACTER_HEIGHT) character_y = (SCRN_HEIGHT - world_grid.resto_y - BLOCK_HEIGHT); 
 		
 		//Clear Background Black
 		
@@ -304,7 +309,9 @@ int main(int argc, char* argv[])
 
 		SDL_RenderCopy(renderer, world_buffer, &srcrect, &dstrect);
 
-		SDL_Color color = { 255, 255, 255 };
+		//Draw Text
+
+		SDL_Color color = { 0, 0, 0 };
 
 		std::string pos = "ViewPort position -  x : " + std::to_string(viewport_x) + " y : " + std::to_string(viewport_y);
 
