@@ -9,6 +9,8 @@
 #include <iostream>
 #include <list>
 #include <string>
+#include <cstdlib>
+#include <time.h>
 
 #define SCRN_X_MIN 0
 #define SCRN_X_MAX 799
@@ -24,6 +26,9 @@
 
 #define BLOCK_WIDTH	32
 #define BLOCK_HEIGHT	32
+
+#define CHARACTER_WIDTH  32
+#define CHARACTER_HEIGHT 32
 
 
 
@@ -87,9 +92,29 @@ int draw_grid()
 {
 
 
+
+  int y = world_grid.resto_y;
+
 	SDL_Surface * world_surface = SDL_CreateRGBSurface(0, WORLD_WIDTH, WORLD_HEIGHT, 32, 0, 0, 0, 0);
 
 	SDL_LockSurface(world_surface);
+ 
+	while (y< (WORLD_HEIGHT - BLOCK_HEIGHT))
+	  {
+	    int x = world_grid.resto_x;
+
+	    while (x<(WORLD_WIDTH - BLOCK_WIDTH))
+	      {
+
+		SDL_Rect r = {x,y,BLOCK_WIDTH,BLOCK_HEIGHT};
+
+		SDL_FillRect(world_surface,&r, SDL_MapRGB(world_surface->format,std::rand() % 256,std::rand() % 256,std:: rand() % 256));
+      
+		x+=BLOCK_WIDTH;
+	}
+
+      y +=BLOCK_HEIGHT;  
+    }
 
 	int x = world_grid.resto_x;
 
@@ -100,16 +125,13 @@ int draw_grid()
 		//linee verticali
 		for (unsigned int y = world_grid.resto_y; y<WORLD_HEIGHT - world_grid.resto_y; ++y)
 		{
-
 			ptr[x + WORLD_WIDTH * y] = 0x00FF0000;
-
 		}
-
 
 		x += (BLOCK_WIDTH);
 	}
 
-	int y = world_grid.resto_y;
+	y = world_grid.resto_y;
 
 	while (y <WORLD_HEIGHT)
 	{
@@ -133,7 +155,12 @@ int draw_grid()
 	return 1;
 }
 
-//TEST PROVA GIT
+int color_grid()
+{
+
+
+  return 1;
+}
 
 int main(int argc, char* argv[])
 {
@@ -160,6 +187,9 @@ int main(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	}
 
+
+	srand ( time(NULL) );
+	
 	std::string font_path = ".//freefont-20120503//FreeMono.ttf";
 	
 	    TTF_Init();
@@ -176,6 +206,8 @@ int main(int argc, char* argv[])
 
 	create_grid();
 
+	color_grid();
+	
 	draw_grid();
 
 	SDL_bool done = SDL_FALSE;
@@ -248,6 +280,14 @@ int main(int argc, char* argv[])
 		
 		if (viewport_y >= (WORLD_HEIGHT - SCRN_HEIGHT ))  viewport_y = (WORLD_HEIGHT - SCRN_HEIGHT );
 
+		if (character_x <0 ) character_x =0;
+
+		if (character_x > SCRN_WIDTH - CHARACTER_WIDTH) character_x = SCRN_WIDTH - CHARACTER_WIDTH; 
+
+		if (character_y <0 ) character_y =0;
+
+		if (character_y > SCRN_HEIGHT - CHARACTER_HEIGHT) character_y = SCRN_HEIGHT - CHARACTER_HEIGHT; 
+		
 		//Clear Background Black
 		
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -284,7 +324,7 @@ int main(int argc, char* argv[])
 
 		//Draw Character
 
-		SDL_Rect r {character_x,character_y,2,2};
+		SDL_Rect r {character_x,character_y, CHARACTER_WIDTH, CHARACTER_HEIGHT};
   
 		SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255 );
 	       
