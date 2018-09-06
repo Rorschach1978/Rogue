@@ -91,8 +91,10 @@ void create_grid()
 int draw_grid()
 {
 
+  int color = std::rand() % 3;
 
-
+  unsigned char rgb[3] =  {0,0,0};
+ 
   int y = world_grid.resto_y;
 
 	SDL_Surface * world_surface = SDL_CreateRGBSurface(0, WORLD_WIDTH, WORLD_HEIGHT, 32, 0, 0, 0, 0);
@@ -101,6 +103,9 @@ int draw_grid()
  
 	while (y< (WORLD_HEIGHT - BLOCK_HEIGHT))
 	  {
+
+	    rgb[color] =0xfa;
+	    
 	    int x = world_grid.resto_x;
 
 	    while (x<(WORLD_WIDTH - BLOCK_WIDTH))
@@ -108,8 +113,10 @@ int draw_grid()
 
 		SDL_Rect r = {x,y,BLOCK_WIDTH,BLOCK_HEIGHT};
 
-		SDL_FillRect(world_surface,&r, SDL_MapRGB(world_surface->format,std::rand() % 256,std::rand() % 256,std:: rand() % 256));
-      
+		SDL_FillRect(world_surface,&r, SDL_MapRGB(world_surface->format,rgb[0],rgb[1],rgb[2]));
+
+		rgb[color] -= 3;
+		
 		x+=BLOCK_WIDTH;
 	}
 
