@@ -10,7 +10,8 @@
 #include <list>
 #include <string>
 #include <cstdlib>
-#include <time.h>
+#include <ctime>
+#include <random>
 
 #define SCRN_X_MIN 0
 #define SCRN_X_MAX 799
@@ -30,7 +31,7 @@
 #define CHARACTER_WIDTH  32
 #define CHARACTER_HEIGHT 32
 
-
+typedef unsigned int uint;
 
 SDL_Window* window = NULL;
 
@@ -60,6 +61,39 @@ static  int character_x = 0;
 static  int character_y = 0;
 
 static Grid world_grid;
+
+static bool console = false;
+
+static TTF_Font *font = nullptr;
+
+class Room
+{
+  uint width;
+  
+  uint height;
+
+public:
+
+  Room(uint w, uint h) : width(w), height(h)
+  {
+    std::random_device rd;
+
+    std::mt19937 mt(rd());
+
+    int max_w = SCRN_WIDTH * 0.10f;
+
+    int max_h = SCRN_HEIGHT * 0.10f;
+    
+    std::uniform_int_distribution<> dist(10, max_w);
+
+  }
+
+
+};
+
+static std::list<Room> rooms_list;
+
+
 
 void create_grid()
 {
@@ -167,12 +201,30 @@ int draw_grid()
 	return 1;
 }
 
-int color_grid()
+void DrawText(unsigned int x,unsigned int y,SDL_Color color,  const std::string& str)
 {
 
+  int texW = 0;
 
-  return 1;
+  int texH = 0;
+
+  SDL_Surface * font_surface = TTF_RenderText_Solid(font, str.c_str(), color);
+
+  SDL_Texture * font_texture = SDL_CreateTextureFromSurface(renderer, font_surface);
+
+  SDL_QueryTexture(font_texture, NULL, NULL, &texW, &texH);
+
+  SDL_Rect font_dstrect = {x, y, texW, texH };
+		
+  SDL_RenderCopy(renderer, font_texture, NULL, &font_dstrect);
+
+  SDL_DestroyTexture(font_texture);
+
+  SDL_FreeSurface(font_surface);
+
 }
+
+
 
 int main(int argc, char* argv[])
 {
@@ -206,7 +258,7 @@ int main(int argc, char* argv[])
 	
 	    TTF_Init();
 
-	    TTF_Font *font = TTF_OpenFont(font_path.c_str(), 25);
+	   font = TTF_OpenFont(font_path.c_str(), 25);
 
 	    if (font == NULL)
 	      {
@@ -216,10 +268,10 @@ int main(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	    }
 
+	    TTF_SetFontStyle(font,TTF_STYLE_BOLD|TTF_STYLE_ITALIC);
+	    
 	create_grid();
 
-	color_grid();
-	
 	draw_grid();
 
 	SDL_bool done = SDL_FALSE;
@@ -247,35 +299,39 @@ int main(int argc, char* argv[])
 			  {
 
 			  case SDLK_a:
-			    character_x -= BLOCK_WIDTH;
+			    viewport_x -= 64;		    
 			    break;
 
 			  case SDLK_d:
-			    character_x += BLOCK_WIDTH;
+			    viewport_x += 64;			    
 			    break;
 
 			  case SDLK_w:
-			    character_y -= BLOCK_HEIGHT;
+			    viewport_y -= 64;
 			    break;
 
 			  case SDLK_s:
-			    character_y += BLOCK_HEIGHT;
+			    viewport_y += 64;
 			    break;
 			    
 			  case SDLK_LEFT:
-			    viewport_x -= 8;
-			    break;
+			    character_x -= BLOCK_WIDTH;
+		    	    break;
 
 			  case SDLK_RIGHT:
-			    viewport_x += 8;
+			    character_x += BLOCK_WIDTH;
 			    break;
 
 			  case SDLK_UP:
-			    viewport_y -= 8;
+			    
+			    character_y -= BLOCK_HEIGHT;
 			    break;
 
-			  case SDLK_DOWN:
-			    viewport_y += 8;
+			  case SDLK_DOWN:		    
+			    character_y += BLOCK_HEIGHT;
+			    break;
+			  case SDLK_c:
+			    console = (!console);
 			    break;
 
 			  default:
@@ -284,6 +340,8 @@ int main(int argc, char* argv[])
 		      }	//end of switch(event.type)   
 		  }//end of while
 
+		//
+		
 		if (viewport_x < 0) viewport_x = 0;
 		
 		if (viewport_x >= (WORLD_WIDTH - SCRN_WIDTH )) viewport_x = (WORLD_WIDTH - SCRN_WIDTH );
@@ -292,13 +350,15 @@ int main(int argc, char* argv[])
 		
 		if (viewport_y >= (WORLD_HEIGHT - SCRN_HEIGHT ))  viewport_y = (WORLD_HEIGHT - SCRN_HEIGHT );
 
+		//
+
 		if (character_x <0 ) character_x =world_grid.resto_x;
 
-		if (character_x > SCRN_WIDTH - CHARACTER_WIDTH) character_x = (SCRN_WIDTH - world_grid.resto_x - BLOCK_WIDTH); 
+		if (character_x > (WORLD_WIDTH - CHARACTER_WIDTH - world_grid.resto_x)) character_x = (WORLD_WIDTH - world_grid.resto_x - BLOCK_WIDTH); 
 
 		if (character_y <0 ) character_y =world_grid.resto_y;
 
-		if (character_y > SCRN_HEIGHT - CHARACTER_HEIGHT) character_y = (SCRN_HEIGHT - world_grid.resto_y - BLOCK_HEIGHT); 
+		if (character_y > (WORLD_HEIGHT - CHARACTER_HEIGHT - world_grid.resto_y)) character_y = (WORLD_HEIGHT - world_grid.resto_y - BLOCK_HEIGHT); 
 		
 		//Clear Background Black
 		
@@ -316,44 +376,41 @@ int main(int argc, char* argv[])
 
 		SDL_RenderCopy(renderer, world_buffer, &srcrect, &dstrect);
 
-		//Draw Text
-
-		SDL_Color color = { 0, 0, 0 };
-
-		std::string pos = "ViewPort position -  x : " + std::to_string(viewport_x) + " y : " + std::to_string(viewport_y);
-
-		SDL_Surface * font_surface = TTF_RenderText_Solid(font, pos.c_str(), color);
-
-		SDL_Texture * font_texture = SDL_CreateTextureFromSurface(renderer, font_surface);
-
-		int texW = 0;
-
-		int texH = 0;
-
-		SDL_QueryTexture(font_texture, NULL, NULL, &texW, &texH);
-
-		SDL_Rect font_dstrect = { 200, 550, texW, texH };
-		
-		SDL_RenderCopy(renderer, font_texture, NULL, &font_dstrect);
-
 		//Draw Character
 
 		SDL_Rect r {character_x,character_y, CHARACTER_WIDTH, CHARACTER_HEIGHT};
   
-		SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255 );
+		SDL_SetRenderDrawColor(renderer, 255, 0, 255, 0 );
 	       
 		SDL_RenderFillRect( renderer, &r );
 
+		if (console)
+		  {
+
+		    //calcola altezza console come un terzo dell'altezza della window
+ 
+		    SDL_Rect r {0,SCRN_HEIGHT - (0.30f * SCRN_HEIGHT),SCRN_WIDTH,600};
+
+		    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+		    SDL_SetRenderDrawColor(renderer, 255, 250, 255, 150 );
+
+		    SDL_RenderFillRect( renderer, &r );
+		    
+		    std::string pos = "ViewPort position -  x : " + std::to_string(viewport_x) + " y : " + std::to_string(viewport_y);
+
+		    DrawText(150,550,{0,0,0},pos);
+
+		    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+
+		    
+		  }
+		
 		//Draw Everything
 
 		SDL_RenderPresent(renderer);
 
 		//
-
-		SDL_DestroyTexture(font_texture);
-
-		SDL_FreeSurface(font_surface);
-
 	}
 
 	if (renderer) {
